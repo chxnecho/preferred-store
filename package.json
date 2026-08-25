@@ -1,0 +1,25 @@
+{
+  "name": "youcai-mall",
+  "version": "1.0.0",
+  "private": true,
+  "description": "优选商城 - Vue3 + Express 全栈电商系统",
+  "type": "module",
+  "scripts": {
+    "install:all": "npm install && npm --prefix client install",
+    "seed": "node server/seed.js",
+    "dev": "concurrently -n server,client -c blue,green \"node server/index.js\" \"npm --prefix client run dev\"",
+    "build": "npm --prefix client run build",
+    "start": "cross-env NODE_ENV=production node server/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "concurrently": "^9.1.2",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}
