@@ -29,6 +29,7 @@ import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import { useCartStore } from "../stores/cart";
+import { safeRedirectPath } from "../utils";
 
 const route = useRoute();
 const router = useRouter();
@@ -50,7 +51,7 @@ async function submit() {
   try {
     await auth.login(username.value, password.value);
     cart.fetchCart();
-    router.push(String(route.query.redirect) || "/");
+    router.push(safeRedirectPath(route.query.redirect));
   } catch (err) {
     error.value = err.message;
   } finally {

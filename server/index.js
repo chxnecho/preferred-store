@@ -1,9 +1,12 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { BizError } from "./errors.js";
 import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/products.js";
 import cartRoutes from "./routes/cart.js";
@@ -13,8 +16,43 @@ import orderRoutes from "./routes/orders.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+// 反向代理（nginx 等）后获取真实客户端 IP，供速率限制使用
+app.set("trust proxy", 1);
+
+// ===== 安全响应头 =====
+app.use(helmet());
+
+// ===== 速率限制：全局宽松 + 认证接口严格（防暴力破解/批量注册） =====
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "请求过于频繁，请稍后再试" },
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "操作过于频繁，请稍后再试" },
+});
+app.use("/api", apiLimiter);
+app.use("/api/auth", authLimiter);
+
+// ===== CORS =====
+// 开发环境放开（配合 Vite 代理调试）；生产环境仅允许同源或 CORS_ORIGIN 白名单
+if (process.env.NODE_ENV === "production") {
+  const origins = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  app.use(cors({ origin: origins.length ? origins : false }));
+} else {
+  app.use(cors());
+}
+
+app.use(express.json({ limit: "100kb" }));
 
 // ===== API 路由 =====
 app.use("/api/auth", authRoutes);
@@ -44,6 +82,9 @@ if (process.env.NODE_ENV === "production") {
 
 // ===== 统一错误处理 =====
 app.use((err, _req, res, _next) => {
+  if (err instanceof BizError) {
+    return res.status(err.statusCode || 400).json({ message: err.message });
+  }
   if (err.type === "entity.parse.failed") {
     return res.status(400).json({ message: "请求体 JSON 格式错误" });
   }

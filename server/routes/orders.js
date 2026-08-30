@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db, withTransaction, genOrderNo } from "../db.js";
+import { BizError } from "../errors.js";
 import { authRequired } from "../middleware/auth.js";
 
 const router = Router();
@@ -43,10 +44,10 @@ router.post("/", (req, res) => {
       // 1. 确定订单商品来源
       let rows;
       if (customItems) {
-        if (customItems.length === 0) throw new Error("订单商品不能为空");
+        if (customItems.length === 0) throw new BizError("订单商品不能为空");
         rows = customItems.map((it) => {
           const p = db.prepare("SELECT * FROM products WHERE id = ?").get(Number(it.productId));
-          if (!p) throw new Error("包含无效商品");
+          if (!p) throw new BizError("包含无效商品");
           return { product: p, qty: Math.max(1, parseInt(it.qty) || 1), pid: Number(it.productId) };
         });
       } else {
@@ -57,14 +58,14 @@ router.post("/", (req, res) => {
           )
           .all(req.user.id)
           .map((r) => ({ product: r, qty: r.qty, pid: r.pid }));
-        if (rows.length === 0) throw new Error("购物车为空，无法下单");
+        if (rows.length === 0) throw new BizError("购物车为空，无法下单");
       }
 
       // 2. 校验库存并计算总价（分单位累加避免浮点误差）
       let totalCents = 0;
       for (const { product, qty } of rows) {
         if (product.stock < qty) {
-          throw new Error(`「${product.name}」库存不足（仅剩 ${product.stock} 件）`);
+          throw new BizError(`「${product.name}」库存不足（仅剩 ${product.stock} 件）`);
         }
         totalCents += Math.round(product.price * qty * 100);
       }
@@ -106,7 +107,9 @@ router.post("/", (req, res) => {
     const order = db.prepare("SELECT * FROM orders WHERE id = ?").get(orderId);
     res.status(201).json({ order: orderWithItems(order) });
   } catch (err) {
-    res.status(400).json({ message: err.message || "下单失败" });
+    // 仅业务错误返回 400，系统错误（如数据库异常）交给统一错误处理返回 500
+    if (err instanceof BizError) return res.status(400).json({ message: err.message });
+    throw err;
   }
 });
 
@@ -149,8 +152,8 @@ router.post("/:id/cancel", (req, res) => {
   try {
     withTransaction(() => {
       const order = db.prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?").get(req.params.id, req.user.id);
-      if (!order) throw new Error("订单不存在");
-      if (order.status !== "pending") throw new Error("仅待支付订单可取消");
+      if (!order) throw new BizError("订单不存在", 404);
+      if (order.status !== "pending") throw new BizError("仅待支付订单可取消");
       const items = db.prepare("SELECT product_id, qty FROM order_items WHERE order_id = ?").all(order.id);
       for (const it of items) {
         db.prepare("UPDATE products SET stock = stock + ?, sales = MAX(sales - ?, 0) WHERE id = ?").run(it.qty, it.qty, it.product_id);
@@ -159,7 +162,8 @@ router.post("/:id/cancel", (req, res) => {
     });
     res.json({ order: orderWithItems(db.prepare("SELECT * FROM orders WHERE id = ?").get(req.params.id)) });
   } catch (err) {
-    res.status(400).json({ message: err.message || "取消失败" });
+    if (err instanceof BizError) return res.status(err.statusCode || 400).json({ message: err.message });
+    throw err;
   }
 });
 
