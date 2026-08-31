@@ -6,10 +6,16 @@ const router = Router();
 router.use(authRequired);
 
 function getCartItems(userId) {
+  // 库存变化后同步展示：qty 显示为不超过库存的可购数量，并标记售罄/缺货
   return db
     .prepare(
-      `SELECT c.product_id AS productId, c.qty, p.name, p.description, p.price,
-              p.emoji, p.bg, p.stock
+      `SELECT c.product_id AS productId,
+              CASE WHEN p.stock <= 0 THEN 0 ELSE MIN(c.qty, p.stock) END AS qty,
+              p.name, p.description,
+              p.price_cents / 100.0 AS price,
+              p.emoji, p.bg, p.stock,
+              CASE WHEN p.stock <= 0 OR p.is_active = 0 THEN 1 ELSE 0 END AS soldOut,
+              CASE WHEN p.stock > 0 AND c.qty > p.stock THEN 1 ELSE 0 END AS stockShortage
        FROM cart_items c JOIN products p ON p.id = c.product_id
        WHERE c.user_id = ? ORDER BY c.rowid DESC`
     )
@@ -55,8 +61,12 @@ router.put("/:productId", (req, res) => {
     db.prepare("DELETE FROM cart_items WHERE user_id = ? AND product_id = ?").run(req.user.id, productId);
   } else {
     const stock = db.prepare("SELECT stock FROM products WHERE id = ?").get(productId)?.stock ?? 0;
+    if (stock <= 0) {
+      // 修复：售罄商品此前可被设置为 1 件绕过库存上限，现直接拒绝
+      return res.status(400).json({ message: "该商品已售罄，无法调整数量" });
+    }
     db.prepare("UPDATE cart_items SET qty = ? WHERE user_id = ? AND product_id = ?").run(
-      Math.min(qty, Math.max(stock, 1)), req.user.id, productId
+      Math.min(qty, stock), req.user.id, productId
     );
   }
   res.json(getCartPayload(req.user.id));

@@ -56,6 +56,13 @@ router.put("/:id", (req, res) => {
     db.prepare(
       "UPDATE addresses SET receiver = ?, phone = ?, region = ?, detail = ?, is_default = ? WHERE id = ?"
     ).run(String(receiver).slice(0, 30), String(phone), String(region).slice(0, 60), String(detail).slice(0, 120), isDefault ? 1 : 0, addr.id);
+    // 兜底：确保用户始终至少有一个默认地址（如取消唯一默认时，将当前地址设为默认）
+    const hasDefault = db
+      .prepare("SELECT 1 FROM addresses WHERE user_id = ? AND is_default = 1 LIMIT 1")
+      .get(req.user.id);
+    if (!hasDefault) {
+      db.prepare("UPDATE addresses SET is_default = 1 WHERE id = ?").run(addr.id);
+    }
   });
   res.json({ address: shape(db.prepare("SELECT * FROM addresses WHERE id = ?").get(addr.id)) });
 });

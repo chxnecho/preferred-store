@@ -18,7 +18,11 @@
             {{ item.emoji }}
           </div>
           <div class="row-info">
-            <div class="row-name">{{ item.name }}</div>
+            <div class="row-name">
+              {{ item.name }}
+              <em v-if="item.soldOut" class="stock-badge soldout">已售罄</em>
+              <em v-else-if="item.stockShortage" class="stock-badge shortage">库存不足，仅剩 {{ item.stock }} 件</em>
+            </div>
             <div class="row-desc">{{ item.description }}</div>
           </div>
           <span class="price row-price">{{ formatPrice(item.price) }}</span>
@@ -119,7 +123,9 @@ async function removeItem(productId) {
 }
 
 function goCheckout() {
-  router.push({ name: "checkout", query: { ids: [...selected].join(",") } });
+  // 售罄（qty 已被置 0）的商品不进入结算
+  const ids = selectedItems.value.filter((i) => i.qty > 0).map((i) => i.productId);
+  router.push({ name: "checkout", query: { ids: ids.join(",") } });
 }
 
 onMounted(async () => {

@@ -15,12 +15,12 @@ export const STATUS_TEXT = {
 
 function orderWithItems(order) {
   const items = db
-    .prepare("SELECT product_id AS productId, name_snapshot AS name, emoji, bg, price, qty FROM order_items WHERE order_id = ?")
+    .prepare("SELECT product_id AS productId, name_snapshot AS name, emoji, bg, price_cents / 100.0 AS price, qty FROM order_items WHERE order_id = ?")
     .all(order.id);
   return {
     id: order.id,
     orderNo: order.order_no,
-    total: order.total,
+    total: order.total_cents / 100,
     status: order.status,
     statusText: STATUS_TEXT[order.status],
     address: JSON.parse(order.address_snapshot),
@@ -46,15 +46,16 @@ router.post("/", (req, res) => {
       if (customItems) {
         if (customItems.length === 0) throw new BizError("订单商品不能为空");
         rows = customItems.map((it) => {
-          const p = db.prepare("SELECT * FROM products WHERE id = ?").get(Number(it.productId));
-          if (!p) throw new BizError("包含无效商品");
+          const p = db.prepare("SELECT * FROM products WHERE id = ? AND is_active = 1").get(Number(it.productId));
+          if (!p) throw new BizError("包含无效或已下架商品");
           return { product: p, qty: Math.max(1, parseInt(it.qty) || 1), pid: Number(it.productId) };
         });
       } else {
         rows = db
           .prepare(
-            `SELECT c.product_id AS pid, c.qty, p.id, p.name, p.emoji, p.bg, p.price, p.stock
-             FROM cart_items c JOIN products p ON p.id = c.product_id WHERE c.user_id = ?`
+            `SELECT c.product_id AS pid, c.qty, p.id, p.name, p.emoji, p.bg, p.price_cents, p.stock
+             FROM cart_items c JOIN products p ON p.id = c.product_id
+             WHERE c.user_id = ? AND p.is_active = 1`
           )
           .all(req.user.id)
           .map((r) => ({ product: r, qty: r.qty, pid: r.pid }));
@@ -67,25 +68,26 @@ router.post("/", (req, res) => {
         if (product.stock < qty) {
           throw new BizError(`「${product.name}」库存不足（仅剩 ${product.stock} 件）`);
         }
-        totalCents += Math.round(product.price * qty * 100);
+        totalCents += product.price_cents * qty;
       }
 
-      // 3. 创建订单 + 明细，扣减库存、累计销量
+      // 3. 创建订单 + 明细，扣减库存、累计销量；30 分钟未支付自动过期
       const addressSnapshot = JSON.stringify({
         receiver: addr.receiver, phone: addr.phone, region: addr.region, detail: addr.detail,
       });
       const info = db
         .prepare(
-          "INSERT INTO orders (order_no, user_id, total, status, address_snapshot) VALUES (?, ?, ?, 'pending', ?)"
+          `INSERT INTO orders (order_no, user_id, total_cents, status, address_snapshot, expire_at)
+           VALUES (?, ?, ?, 'pending', ?, datetime('now', '+30 minutes'))`
         )
-        .run(genOrderNo(), req.user.id, totalCents / 100, addressSnapshot);
+        .run(genOrderNo(), req.user.id, totalCents, addressSnapshot);
 
       const itemStmt = db.prepare(
-        "INSERT INTO order_items (order_id, product_id, name_snapshot, emoji, bg, price, qty) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO order_items (order_id, product_id, name_snapshot, emoji, bg, price_cents, qty) VALUES (?, ?, ?, ?, ?, ?, ?)"
       );
       const stockStmt = db.prepare("UPDATE products SET stock = stock - ?, sales = sales + ? WHERE id = ?");
       for (const { product, qty, pid } of rows) {
-        itemStmt.run(info.lastInsertRowid, pid, product.name, product.emoji, product.bg, product.price, qty);
+        itemStmt.run(info.lastInsertRowid, pid, product.name, product.emoji, product.bg, product.price_cents, qty);
         stockStmt.run(qty, qty, pid);
       }
 
@@ -140,11 +142,15 @@ router.get("/:id", (req, res) => {
 
 // POST /api/orders/:id/pay —— 模拟支付
 router.post("/:id/pay", (req, res) => {
-  const order = db.prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?").get(req.params.id, req.user.id);
-  if (!order) return res.status(404).json({ message: "订单不存在" });
-  if (order.status !== "pending") return res.status(400).json({ message: "当前状态不可支付" });
-  db.prepare("UPDATE orders SET status = 'paid', paid_at = datetime('now','localtime') WHERE id = ?").run(order.id);
-  res.json({ order: orderWithItems(db.prepare("SELECT * FROM orders WHERE id = ?").get(order.id)) });
+  // 条件更新（仅 pending 可支付）+ 检查影响行数，避免 check-then-act 竞态
+  const info = db
+    .prepare(
+      "UPDATE orders SET status = 'paid', paid_at = datetime('now') WHERE id = ? AND user_id = ? AND status = 'pending'"
+    )
+    .run(req.params.id, req.user.id);
+  if (info.changes === 0) return res.status(404).json({ message: "订单不存在或当前状态不可支付" });
+  const order = db.prepare("SELECT * FROM orders WHERE id = ?").get(req.params.id);
+  res.json({ order: orderWithItems(order) });
 });
 
 // POST /api/orders/:id/cancel —— 取消订单（待支付状态），回补库存与销量
@@ -169,11 +175,12 @@ router.post("/:id/cancel", (req, res) => {
 
 // POST /api/orders/:id/confirm —— 确认收货（待收货 → 已完成）
 router.post("/:id/confirm", (req, res) => {
-  const order = db.prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?").get(req.params.id, req.user.id);
-  if (!order) return res.status(404).json({ message: "订单不存在" });
-  if (order.status !== "paid") return res.status(400).json({ message: "当前状态不可确认收货" });
-  db.prepare("UPDATE orders SET status = 'completed' WHERE id = ?").run(order.id);
-  res.json({ order: orderWithItems(db.prepare("SELECT * FROM orders WHERE id = ?").get(order.id)) });
+  const info = db
+    .prepare("UPDATE orders SET status = 'completed' WHERE id = ? AND user_id = ? AND status = 'paid'")
+    .run(req.params.id, req.user.id);
+  if (info.changes === 0) return res.status(404).json({ message: "订单不存在或当前状态不可确认收货" });
+  const order = db.prepare("SELECT * FROM orders WHERE id = ?").get(req.params.id);
+  res.json({ order: orderWithItems(order) });
 });
 
 export default router;

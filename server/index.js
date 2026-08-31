@@ -7,6 +7,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { BizError } from "./errors.js";
+import { startOrderExpiryJob } from "./jobs/order-expiry.js";
 import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/products.js";
 import cartRoutes from "./routes/cart.js";
@@ -93,6 +94,10 @@ app.use((err, _req, res, _next) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+// 定时取消超时未支付订单（回补库存）
+startOrderExpiryJob();
+
 app.listen(PORT, () => {
   console.log(`✅ 优选商城后端已启动: http://localhost:${PORT}${process.env.NODE_ENV === "production" ? "（生产模式）" : ""}`);
 });

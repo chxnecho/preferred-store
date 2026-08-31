@@ -35,10 +35,13 @@ if (count > 0 && !force) {
     console.log("已清空商品相关数据");
   }
   const stmt = db.prepare(
-    `INSERT INTO products (name, description, price, sales, category, emoji, bg, stock)
+    `INSERT INTO products (name, description, price_cents, sales, category, emoji, bg, stock)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   );
-  for (const p of PRODUCTS) stmt.run(...p);
+  // 金额以整数分（元 × 100）入库，避免浮点存储
+  for (const [name, desc, priceYuan, sales, category, emoji, bg, stock] of PRODUCTS) {
+    stmt.run(name, desc, Math.round(priceYuan * 100), sales, category, emoji, bg, stock);
+  }
   console.log(`已写入 ${PRODUCTS.length} 款商品`);
 }
 

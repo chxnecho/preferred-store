@@ -31,7 +31,7 @@
           <p v-if="o.items.length > 4" class="more-items">等 {{ o.items.length }} 件商品...</p>
         </div>
         <div class="order-foot">
-          <span>{{ o.createdAt }}</span>
+          <span>{{ formatTime(o.createdAt) }}</span>
           <div class="foot-right">
             <span>合计：<b class="price">{{ formatPrice(o.total) }}</b></span>
             <button v-if="o.status === 'pending'" class="btn-primary small" @click="pay(o)">去支付</button>
@@ -56,7 +56,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
 import { toast } from "../toast";
-import { formatPrice } from "../utils";
+import { formatPrice, formatTime } from "../utils";
 
 const route = useRoute();
 const router = useRouter();

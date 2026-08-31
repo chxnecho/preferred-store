@@ -8,7 +8,13 @@ export function safeRedirectPath(p) {
   return s.startsWith("/") && !s.startsWith("//") ? s : "/";
 }
 
-/** 格式化时间字符串 "2026-08-25 08:42:48" → 友好显示 */
+/** 服务端 UTC 时间 "YYYY-MM-DD HH:MM:SS" → 本地时区友好显示 */
 export function formatTime(s) {
-  return s || "-";
+  if (!s) return "-";
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(String(s));
+  if (!m) return s;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]));
+  if (Number.isNaN(d.getTime())) return s;
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }

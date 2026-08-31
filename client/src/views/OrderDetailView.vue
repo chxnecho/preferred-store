@@ -40,7 +40,7 @@
           <span class="price item-sub">{{ formatPrice(it.price * it.qty) }}</span>
         </div>
         <div class="total-row">
-          <span>订单编号：{{ order.orderNo }} · 下单时间：{{ order.createdAt }}</span>
+          <span>订单编号：{{ order.orderNo }} · 下单时间：{{ formatTime(order.createdAt) }}</span>
           <span>实付款：<b class="price big">{{ formatPrice(order.total) }}</b></span>
         </div>
       </section>
@@ -53,7 +53,7 @@ import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api } from "../api";
 import { toast } from "../toast";
-import { formatPrice } from "../utils";
+import { formatPrice, formatTime } from "../utils";
 
 const route = useRoute();
 const order = ref(null);

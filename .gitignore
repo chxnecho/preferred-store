@@ -2,8 +2,9 @@
 .DS_Store
 Thumbs.db
 
-# 编辑器
-.vscode/
+# 编辑器（保留扩展推荐列表供团队成员安装）
+.vscode/*
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
