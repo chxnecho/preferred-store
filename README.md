@@ -70,9 +70,8 @@ node server/seed.js --force   # 清空并重灌商品数据
 ## 项目结构
 
 ```
-demo1/
+preferred-store/
 ├── package.json             # 根配置与统一启动脚本
-├── legacy/                  # 旧版纯静态 Demo（已由本系统取代，仅存档）
 ├── server/                  # Express 后端
 │   ├── index.js             # 入口：路由挂载、静态托管、错误处理
 │   ├── db.js                # SQLite 连接、事务工具、旧库迁移

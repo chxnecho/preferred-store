@@ -14,15 +14,17 @@
           <router-link :to="s.to" class="btn-primary">{{ s.btn }}</router-link>
         </div>
       </div>
-      <button class="banner-arrow prev" @click="go(current - 1)">‹</button>
-      <button class="banner-arrow next" @click="go(current + 1)">›</button>
+      <button class="banner-arrow prev" aria-label="上一张" @click="go(current - 1)">‹</button>
+      <button class="banner-arrow next" aria-label="下一张" @click="go(current + 1)">›</button>
       <div class="banner-dots">
-        <span
+        <button
           v-for="(s, i) in slides"
           :key="i"
+          class="dot"
           :class="{ active: i === current }"
+          :aria-label="`切换到第 ${i + 1} 张轮播图`"
           @click="go(i)"
-        ></span>
+        ></button>
       </div>
     </section>
 
@@ -188,15 +190,17 @@ onUnmounted(() => clearInterval(timer))
   gap: 10px;
   z-index: 5;
 }
-.banner-dots span {
+.banner-dots .dot {
   width: 10px;
   height: 10px;
+  padding: 0;
+  border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   transition: all 0.3s;
 }
-.banner-dots span.active {
+.banner-dots .dot.active {
   background: #fff;
   width: 26px;
   border-radius: 999px;

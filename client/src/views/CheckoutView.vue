@@ -31,37 +31,13 @@
       </div>
 
       <!-- 新增/编辑地址表单 -->
-      <form v-if="showAddrForm" class="addr-form" @submit.prevent="saveAddress">
-        <div class="form-grid">
-          <div class="form-item">
-            <label>收货人</label>
-            <input v-model.trim="addrForm.receiver" placeholder="姓名" />
-          </div>
-          <div class="form-item">
-            <label>手机号</label>
-            <input v-model.trim="addrForm.phone" placeholder="11 位手机号" maxlength="11" />
-          </div>
-          <div class="form-item">
-            <label>所在地区</label>
-            <input
-              v-model.trim="addrForm.region"
-              placeholder="省 市 区（如：上海市 上海市 浦东新区）"
-            />
-          </div>
-          <div class="form-item">
-            <label>详细地址</label>
-            <input v-model.trim="addrForm.detail" placeholder="街道、楼栋、门牌号" />
-          </div>
-        </div>
-        <label class="default-check">
-          <input v-model="addrForm.isDefault" type="checkbox" /> 设为默认地址
-        </label>
-        <p v-if="addrError" class="form-error">{{ addrError }}</p>
-        <div class="addr-form-actions">
-          <button type="submit" class="btn-primary small">保存</button>
-          <button type="button" class="btn-outline" @click="showAddrForm = false">取消</button>
-        </div>
-      </form>
+      <AddressForm
+        v-if="showAddrForm"
+        :error="addrError"
+        :submitting="addrSaving"
+        @save="saveAddress"
+        @cancel="showAddrForm = false"
+      />
     </section>
 
     <!-- 商品清单 -->
@@ -74,6 +50,11 @@
         <span class="item-qty">× {{ i.qty }}</span>
         <span class="price item-sub">{{ formatPrice(i.price * i.qty) }}</span>
       </div>
+      <p v-if="checkoutItems.length === 0" class="addr-empty">
+        没有可结算的商品，
+        <router-link to="/cart">返回购物车</router-link>
+        重新勾选吧～
+      </p>
     </section>
 
     <!-- 提交栏 -->
@@ -94,9 +75,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { api } from "../api"
+import AddressForm from "../components/AddressForm.vue"
 import { useCartStore } from "../stores/cart"
 import { toast } from "../toast"
 import { formatPrice } from "../utils"
@@ -109,7 +91,7 @@ const addresses = ref([])
 const selectedAddressId = ref(null)
 const showAddrForm = ref(false)
 const addrError = ref("")
-const addrForm = reactive({ receiver: "", phone: "", region: "", detail: "", isDefault: false })
+const addrSaving = ref(false)
 const submitting = ref(false)
 
 const idsParam = String(route.query.ids || "")
@@ -124,7 +106,6 @@ const total = computed(
 const canSubmit = computed(() => selectedAddressId.value && totalQty.value > 0)
 
 function openAddrForm() {
-  Object.assign(addrForm, { receiver: "", phone: "", region: "", detail: "", isDefault: false })
   addrError.value = ""
   showAddrForm.value = true
 }
@@ -138,15 +119,18 @@ async function loadAddresses() {
   }
 }
 
-async function saveAddress() {
+async function saveAddress(formData) {
   addrError.value = ""
+  addrSaving.value = true
   try {
-    await api.addAddress({ ...addrForm })
+    await api.addAddress(formData)
     showAddrForm.value = false
     await loadAddresses()
     toast("地址已保存")
   } catch (err) {
     addrError.value = err.message
+  } finally {
+    addrSaving.value = false
   }
 }
 

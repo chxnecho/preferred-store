@@ -9,7 +9,7 @@
         <p class="detail-desc">{{ product.description }}</p>
         <div class="detail-meta">
           <span>分类：{{ product.category }}</span>
-          <span>{{ salesText }}</span>
+          <span>{{ formatSales(product.sales) }}</span>
           <span :class="{ danger: product.stock <= 10 }">库存：{{ product.stock }} 件</span>
         </div>
         <div class="detail-price-row">
@@ -50,13 +50,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { api } from "../api"
 import { useAuthStore } from "../stores/auth"
 import { useCartStore } from "../stores/cart"
 import { toast } from "../toast"
-import { formatPrice } from "../utils"
+import { formatPrice, formatSales } from "../utils"
 
 const route = useRoute()
 const router = useRouter()
@@ -67,11 +67,6 @@ const product = ref(null)
 const loading = ref(true)
 const qty = ref(1)
 const submitting = ref(false)
-
-const salesText = computed(() => {
-  const s = product.value?.sales || 0
-  return s >= 10000 ? `已售 ${(s / 10000).toFixed(1)}万` : `已售 ${s}`
-})
 
 async function load() {
   loading.value = true

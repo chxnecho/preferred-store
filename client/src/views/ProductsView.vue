@@ -62,6 +62,7 @@ const categories = ref([{ name: "全部", count: 0 }])
 const products = ref([])
 const total = ref(0)
 const loading = ref(true)
+let inFlight = null // 当前进行中的商品列表请求（AbortController）
 
 const sorts = [
   { label: "默认", value: "default" },
@@ -95,22 +96,31 @@ function clearKeyword() {
 watch(
   () => [route.query.category, route.query.keyword, route.query.sort, route.query.page],
   async () => {
+    // 取消上一次未完成的请求，防止慢响应覆盖新结果（竞态）
+    inFlight?.abort()
+    inFlight = new AbortController()
+    const { signal } = inFlight
+
     loading.value = true
     try {
-      const data = await api.products({
-        category: currentCategory.value,
-        keyword: keyword.value,
-        sort: currentSort.value,
-        page: page.value,
-        pageSize
-      })
+      const data = await api.products(
+        {
+          category: currentCategory.value,
+          keyword: keyword.value,
+          sort: currentSort.value,
+          page: page.value,
+          pageSize
+        },
+        { signal }
+      )
       products.value = data.list
       total.value = data.total
     } catch (err) {
+      if (err?.name === "AbortError") return // 已被新请求取代
       console.error(err)
       products.value = []
     } finally {
-      loading.value = false
+      if (!signal.aborted) loading.value = false
     }
   },
   { immediate: true }

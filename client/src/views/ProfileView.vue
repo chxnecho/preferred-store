@@ -13,12 +13,10 @@
       </div>
       <div class="user-stats">
         <router-link to="/orders">
-          <b>{{ orderCount }}</b
-          ><span>全部订单</span>
+          <b>{{ orderCount }}</b><span>全部订单</span>
         </router-link>
         <router-link to="/cart">
-          <b>{{ cart.totalQty }}</b
-          ><span>购物车</span>
+          <b>{{ cart.totalQty }}</b><span>购物车</span>
         </router-link>
       </div>
     </section>
@@ -47,34 +45,14 @@
       </div>
 
       <!-- 新增/编辑表单 -->
-      <form v-if="showForm" class="addr-form" @submit.prevent="save">
-        <div class="form-grid">
-          <div class="form-item">
-            <label>收货人</label>
-            <input v-model.trim="form.receiver" placeholder="姓名" />
-          </div>
-          <div class="form-item">
-            <label>手机号</label>
-            <input v-model.trim="form.phone" placeholder="11 位手机号" maxlength="11" />
-          </div>
-          <div class="form-item">
-            <label>所在地区</label>
-            <input v-model.trim="form.region" placeholder="省 市 区" />
-          </div>
-          <div class="form-item">
-            <label>详细地址</label>
-            <input v-model.trim="form.detail" placeholder="街道、楼栋、门牌号" />
-          </div>
-        </div>
-        <label class="default-check"
-          ><input v-model="form.isDefault" type="checkbox" /> 设为默认地址</label
-        >
-        <p v-if="error" class="form-error">{{ error }}</p>
-        <div class="form-actions">
-          <button type="submit" class="btn-primary small">保存</button>
-          <button type="button" class="btn-outline small" @click="showForm = false">取消</button>
-        </div>
-      </form>
+      <AddressForm
+        v-if="showForm"
+        :initial="editingAddr"
+        :error="error"
+        :submitting="saving"
+        @save="save"
+        @cancel="showForm = false"
+      />
     </section>
 
     <!-- 其他 -->
@@ -86,9 +64,11 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from "vue"
+import { onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
 import { api } from "../api"
+import AddressForm from "../components/AddressForm.vue"
+import { confirm } from "../confirm"
 import { useAuthStore } from "../stores/auth"
 import { useCartStore } from "../stores/cart"
 import { toast } from "../toast"
@@ -100,19 +80,12 @@ const cart = useCartStore()
 const addresses = ref([])
 const orderCount = ref(0)
 const showForm = ref(false)
-const editingId = ref(null)
+const editingAddr = ref(null) // 编辑中的地址对象，新增时为 null
+const saving = ref(false)
 const error = ref("")
-const form = reactive({ receiver: "", phone: "", region: "", detail: "", isDefault: false })
 
 function openForm(a = null) {
-  editingId.value = a ? a.id : null
-  Object.assign(form, {
-    receiver: a?.receiver || "",
-    phone: a?.phone || "",
-    region: a?.region || "",
-    detail: a?.detail || "",
-    isDefault: a ? a.isDefault : false
-  })
+  editingAddr.value = a
   error.value = ""
   showForm.value = true
 }
@@ -127,22 +100,28 @@ async function loadAll() {
   }
 }
 
-async function save() {
+async function save(formData) {
   error.value = ""
-  const body = { ...form }
+  saving.value = true
   try {
-    if (editingId.value) await api.updateAddress(editingId.value, body)
-    else await api.addAddress(body)
+    if (editingAddr.value) await api.updateAddress(editingAddr.value.id, formData)
+    else await api.addAddress(formData)
     showForm.value = false
     await loadAll()
     toast("已保存")
   } catch (err) {
     error.value = err.message
+  } finally {
+    saving.value = false
   }
 }
 
 async function removeAddr(a) {
-  if (!window.confirm(`确认删除「${a.receiver}」的地址吗？`)) return
+  const ok = await confirm(`确认删除「${a.receiver}」的地址吗？`, {
+    title: "删除地址",
+    danger: true,
+  })
+  if (!ok) return
   try {
     await api.deleteAddress(a.id)
     await loadAll()

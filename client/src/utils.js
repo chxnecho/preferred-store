@@ -2,6 +2,12 @@ export function formatPrice(n) {
   return Number(n || 0).toFixed(2)
 }
 
+/** 格式化销量：过万显示 x.x万 */
+export function formatSales(n) {
+  const s = Number(n || 0)
+  return s >= 10000 ? `已售 ${(s / 10000).toFixed(1)}万` : `已售 ${s}`
+}
+
 /** 校验登录后跳转地址：只允许站内绝对路径，防止开放跳转 */
 export function safeRedirectPath(p) {
   const s = String(p || "")

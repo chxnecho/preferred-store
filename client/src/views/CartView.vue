@@ -25,9 +25,7 @@
             <div class="row-name">
               {{ item.name }}
               <em v-if="item.soldOut" class="stock-badge soldout">已售罄</em>
-              <em v-else-if="item.stockShortage" class="stock-badge shortage"
-                >库存不足，仅剩 {{ item.stock }} 件</em
-              >
+              <em v-else-if="item.stockShortage" class="stock-badge shortage">库存不足，仅剩 {{ item.stock }} 件</em>
             </div>
             <div class="row-desc">{{ item.description }}</div>
           </div>
@@ -53,9 +51,7 @@
           <input type="checkbox" :checked="allSelected" @change="toggleAll" /> 全选
         </label>
         <div class="summary-right">
-          <span
-            >已选 <b>{{ selectedQty }}</b> 件，合计：</span
-          >
+          <span>已选 <b>{{ selectedQty }}</b> 件，合计：</span>
           <strong class="price big">{{ formatPrice(selectedTotal) }}</strong>
           <button class="btn-primary" :disabled="selectedQty === 0 || busy" @click="goCheckout">
             去结算（{{ selectedQty }}）

@@ -51,9 +51,7 @@
         </div>
         <div class="total-row">
           <span>订单编号：{{ order.orderNo }} · 下单时间：{{ formatTime(order.createdAt) }}</span>
-          <span
-            >实付款：<b class="price big">{{ formatPrice(order.total) }}</b></span
-          >
+          <span>实付款：<b class="price big">{{ formatPrice(order.total) }}</b></span>
         </div>
       </section>
     </template>
@@ -64,6 +62,7 @@
 import { ref, watch } from "vue"
 import { useRoute } from "vue-router"
 import { api } from "../api"
+import { useOrderActions } from "../composables/useOrderActions"
 import { toast } from "../toast"
 import { formatPrice, formatTime } from "../utils"
 
@@ -85,35 +84,22 @@ async function load() {
   }
 }
 
+// 订单操作复用：成功后用返回的最新订单更新视图
+const actions = useOrderActions()
+
 async function pay() {
-  try {
-    const data = await api.payOrder(order.value.id)
-    order.value = data.order
-    toast("支付成功 🎉")
-  } catch (err) {
-    toast(err.message, "error")
-  }
+  const updated = await actions.pay(order.value)
+  if (updated) order.value = updated
 }
 
 async function cancel() {
-  if (!window.confirm("确认取消该订单吗？")) return
-  try {
-    const data = await api.cancelOrder(order.value.id)
-    order.value = data.order
-    toast("订单已取消")
-  } catch (err) {
-    toast(err.message, "error")
-  }
+  const updated = await actions.cancel(order.value)
+  if (updated) order.value = updated
 }
 
 async function confirmReceipt() {
-  try {
-    const data = await api.confirmOrder(order.value.id)
-    order.value = data.order
-    toast("已确认收货，感谢购买！")
-  } catch (err) {
-    toast(err.message, "error")
-  }
+  const updated = await actions.confirmReceipt(order.value)
+  if (updated) order.value = updated
 }
 
 watch(

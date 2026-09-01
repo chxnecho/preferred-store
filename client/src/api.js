@@ -1,6 +1,9 @@
 import { getToken, setToken, setStoredUser } from "./auth"
 
-async function request(path, { method = "GET", body } = {}) {
+/** 认证失效时广播事件（App.vue 监听后清理状态并引导重新登录） */
+export const AUTH_EXPIRED_EVENT = "auth:expired"
+
+async function request(path, { method = "GET", body, signal } = {}) {
   const headers = {}
   if (body !== undefined) headers["Content-Type"] = "application/json"
   const token = getToken()
@@ -11,18 +14,21 @@ async function request(path, { method = "GET", body } = {}) {
     res = await fetch(`/api${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal,
     })
-  } catch {
-    throw new Error("网络异常，请确认后端服务已启动")
+  } catch (err) {
+    if (err?.name === "AbortError") throw err // 请求被取消，交由调用方静默处理
+    throw new Error("网络异常，请确认后端服务已启动", { cause: err })
   }
 
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    // token 失效：清除本地登录态，由路由守卫引导重新登录
+    // token 失效：清除本地登录态并广播，由监听器清理 Pinia 状态并引导重新登录
     if (res.status === 401 && token) {
       setToken("")
       setStoredUser(null)
+      window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT))
     }
     throw new Error(data.message || `请求失败（${res.status}）`)
   }
@@ -33,9 +39,9 @@ export const api = {
   // 认证
   register: (body) => request("/auth/register", { method: "POST", body }),
   login: (body) => request("/auth/login", { method: "POST", body }),
-  me: () => request("/auth/me"),
+  me: (opts) => request("/auth/me", opts),
   // 商品
-  products: (query = {}) => request(`/products?${new URLSearchParams(query)}`),
+  products: (query = {}, opts = {}) => request(`/products?${new URLSearchParams(query)}`, opts),
   categories: () => request("/products/categories"),
   product: (id) => request(`/products/${id}`),
   // 购物车

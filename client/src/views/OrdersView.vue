@@ -39,9 +39,7 @@
         <div class="order-foot">
           <span>{{ formatTime(o.createdAt) }}</span>
           <div class="foot-right">
-            <span
-              >合计：<b class="price">{{ formatPrice(o.total) }}</b></span
-            >
+            <span>合计：<b class="price">{{ formatPrice(o.total) }}</b></span>
             <button v-if="o.status === 'pending'" class="btn-primary small" @click="pay(o)">
               去支付
             </button>
@@ -63,6 +61,11 @@
       <button :disabled="page <= 1" @click="load(page - 1)">‹ 上一页</button>
       <span>第 {{ page }} / {{ totalPages }} 页</span>
       <button :disabled="page >= totalPages" @click="load(page + 1)">下一页 ›</button>
+      <label class="page-jump">
+        跳至
+        <input type="number" min="1" :max="totalPages" aria-label="跳转到指定页" @keydown.enter="jumpPage" />
+        页
+      </label>
     </div>
   </main>
 </template>
@@ -71,6 +74,7 @@
 import { computed, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { api } from "../api"
+import { useOrderActions } from "../composables/useOrderActions"
 import { toast } from "../toast"
 import { formatPrice, formatTime } from "../utils"
 
@@ -109,35 +113,15 @@ function switchTab(v) {
   router.push({ query: { status: v || undefined, page: 1 } })
 }
 
-async function pay(o) {
-  try {
-    await api.payOrder(o.id)
-    toast("支付成功 🎉")
-    load()
-  } catch (err) {
-    toast(err.message, "error")
-  }
-}
+// 订单操作复用：成功后刷新列表（pay/cancel/confirmReceipt 由 composable 提供）
+const { pay, cancel, confirmReceipt } = useOrderActions(() => load())
 
-async function cancel(o) {
-  if (!window.confirm(`确认取消订单 ${o.orderNo} 吗？`)) return
-  try {
-    await api.cancelOrder(o.id)
-    toast("订单已取消")
-    load()
-  } catch (err) {
-    toast(err.message, "error")
+function jumpPage(e) {
+  const p = parseInt(e.target.value)
+  if (Number.isInteger(p) && p >= 1 && p <= totalPages.value && p !== page.value) {
+    router.push({ query: { ...route.query, page: p } })
   }
-}
-
-async function confirmReceipt(o) {
-  try {
-    await api.confirmOrder(o.id)
-    toast("已确认收货，感谢购买！")
-    load()
-  } catch (err) {
-    toast(err.message, "error")
-  }
+  e.target.value = ""
 }
 
 watch(
@@ -289,5 +273,20 @@ watch(
 .pagination span {
   font-size: 13px;
   color: var(--text-light);
+}
+.page-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.page-jump input {
+  width: 56px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
 }
 </style>

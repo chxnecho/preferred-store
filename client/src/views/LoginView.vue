@@ -22,9 +22,9 @@
         </button>
       </form>
       <p class="form-footer">
-        还没有账号？<router-link :to="{ name: 'register', query: $route.query }"
-          >立即注册</router-link
-        >
+        还没有账号？<router-link :to="{ name: 'register', query: $route.query }">
+          立即注册
+        </router-link>
       </p>
       <p class="demo-hint">演示账号：demo / 123456</p>
     </div>
