@@ -1,24 +1,28 @@
 // 数据库连接：使用 Node.js 内置的 node:sqlite（Node >= 22.5，无需原生编译依赖）
-import { DatabaseSync } from "node:sqlite";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { DatabaseSync } from "node:sqlite"
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, "data");
-fs.mkdirSync(dataDir, { recursive: true });
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const dataDir = path.join(__dirname, "data")
+fs.mkdirSync(dataDir, { recursive: true })
 
-export const db = new DatabaseSync(path.join(dataDir, "shop.db"));
-db.exec("PRAGMA foreign_keys = ON;");
+// 可通过 DB_PATH 环境变量指定数据库位置（如测试时使用 :memory:）
+export const db = new DatabaseSync(process.env.DB_PATH || path.join(dataDir, "shop.db"))
+db.exec("PRAGMA foreign_keys = ON;")
 
 // ===== 旧版本库迁移：REAL 金额 → 整数分，并为待支付订单补充过期时间 =====
 // 通过检查列名识别旧库（price/total → price_cents/total_cents），迁移后重建索引
-(function migrateLegacyAmountColumns() {
-  const cols = db.prepare("PRAGMA table_info(products)").all().map((c) => c.name);
-  if (cols.length === 0 || cols.includes("price_cents")) return; // 新库无需迁移
+;(function migrateLegacyAmountColumns() {
+  const cols = db
+    .prepare("PRAGMA table_info(products)")
+    .all()
+    .map((c) => c.name)
+  if (cols.length === 0 || cols.includes("price_cents")) return // 新库无需迁移
 
   // 重建父表会连带影响外键约束，迁移期间临时关闭并在结束后恢复
-  db.exec("PRAGMA foreign_keys = OFF;");
+  db.exec("PRAGMA foreign_keys = OFF;")
   db.exec(`
     BEGIN;
     CREATE TABLE products_new (
@@ -76,31 +80,36 @@ db.exec("PRAGMA foreign_keys = ON;");
     DROP TABLE order_items;
     ALTER TABLE order_items_new RENAME TO order_items;
     COMMIT;
-  `);
-  db.exec("PRAGMA foreign_keys = ON;");
-  console.log("✅ 数据库迁移完成：金额转换为整数分存储，待支付订单已设置 30 分钟过期时间");
-})();
+  `)
+  db.exec("PRAGMA foreign_keys = ON;")
+  console.log("✅ 数据库迁移完成：金额转换为整数分存储，待支付订单已设置 30 分钟过期时间")
+})()
 
-const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf-8");
-db.exec(schema);
+const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf-8")
+db.exec(schema)
 
 /** 在事务中执行 fn，异常时自动回滚 */
 export function withTransaction(fn) {
-  db.exec("BEGIN");
+  db.exec("BEGIN")
   try {
-    const result = fn();
-    db.exec("COMMIT");
-    return result;
+    const result = fn()
+    db.exec("COMMIT")
+    return result
   } catch (err) {
-    db.exec("ROLLBACK");
-    throw err;
+    db.exec("ROLLBACK")
+    throw err
   }
 }
 
 /** 生成订单号：14 位日期时间戳 + 6 位随机数，降低并发碰撞概率 */
 export function genOrderNo() {
-  const d = new Date();
-  const p = (n, l = 2) => String(n).padStart(l, "0");
-  const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-  return ts + Math.floor(Math.random() * 1e6).toString().padStart(6, "0");
+  const d = new Date()
+  const p = (n, l = 2) => String(n).padStart(l, "0")
+  const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+  return (
+    ts +
+    Math.floor(Math.random() * 1e6)
+      .toString()
+      .padStart(6, "0")
+  )
 }

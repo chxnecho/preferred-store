@@ -5,6 +5,7 @@
 ## 功能特性
 
 ### 用户端
+
 - 🔐 **用户体系**：注册 / 登录（JWT 鉴权，密码 bcrypt 加密存储），登录态 7 天有效
 - 🏠 **首页**：轮播 Banner、特色服务、热门商品榜
 - 🔍 **商品列表**：分类筛选（动态统计）、关键词搜索、排序（销量/价格/最新）、分页
@@ -16,13 +17,14 @@
 - 📱 **响应式设计**：适配桌面、平板、手机
 
 ### 后端 API
-| 模块 | 端点 |
-|---|---|
-| 认证 | `POST /api/auth/register` · `POST /api/auth/login` · `GET /api/auth/me` |
-| 商品 | `GET /api/products`（分页/筛选/搜索/排序）· `GET /api/products/categories` · `GET /api/products/:id` |
-| 购物车 | `GET/POST /api/cart` · `PUT/DELETE /api/cart/:productId` · `DELETE /api/cart` |
-| 地址 | `GET/POST /api/addresses` · `PUT/DELETE /api/addresses/:id` |
-| 订单 | `POST /api/orders`（事务扣库存）· `GET /api/orders` · `GET /api/orders/:id` · `POST /api/orders/:id/pay` `/cancel` `/confirm` |
+
+| 模块   | 端点                                                                                                                          |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| 认证   | `POST /api/auth/register` · `POST /api/auth/login` · `GET /api/auth/me`                                                       |
+| 商品   | `GET /api/products`（分页/筛选/搜索/排序）· `GET /api/products/categories` · `GET /api/products/:id`                          |
+| 购物车 | `GET/POST /api/cart` · `PUT/DELETE /api/cart/:productId` · `DELETE /api/cart`                                                 |
+| 地址   | `GET/POST /api/addresses` · `PUT/DELETE /api/addresses/:id`                                                                   |
+| 订单   | `POST /api/orders`（事务扣库存）· `GET /api/orders` · `GET /api/orders/:id` · `POST /api/orders/:id/pay` `/cancel` `/confirm` |
 
 > 完整请求示例见各路由文件 `server/routes/*.js`。
 
@@ -46,9 +48,21 @@ npm run build        # 构建前端到 client/dist
 npm start            # 单进程托管前后端，访问 http://localhost:3000
 ```
 
+**工程化命令：**
+
+```bash
+npm test             # 后端 API 集成测试（node:test + 内存数据库，无外部依赖）
+npm run lint         # ESLint 检查（ESLint 9 + eslint-plugin-vue）
+npm run lint:fix     # 自动修复
+npm run format       # Prettier 统一格式化
+```
+
+> 环境变量通过 `.env` 文件配置（参考 `.env.example`），支持 `PORT`、`JWT_SECRET`、`CORS_ORIGIN`、`DB_PATH`。
+
 **演示账号**：`demo` / `123456`
 
 其他命令：
+
 ```bash
 node server/seed.js --force   # 清空并重灌商品数据
 ```
@@ -61,10 +75,13 @@ demo1/
 ├── legacy/                  # 旧版纯静态 Demo（已由本系统取代，仅存档）
 ├── server/                  # Express 后端
 │   ├── index.js             # 入口：路由挂载、静态托管、错误处理
-│   ├── db.js                # SQLite 连接、事务工具
+│   ├── db.js                # SQLite 连接、事务工具、旧库迁移
+│   ├── errors.js            # BizError 业务错误类
 │   ├── schema.sql           # 建表语句
 │   ├── seed.js              # 种子数据（商品 + 演示账号）
 │   ├── middleware/auth.js   # JWT 签发与鉴权中间件
+│   ├── jobs/order-expiry.js # 待支付订单超时自动取消
+│   ├── test/api.test.js     # API 集成测试（node:test）
 │   ├── routes/
 │   │   ├── auth.js          # 注册 / 登录 / 我的信息
 │   │   ├── products.js      # 商品列表 / 分类 / 详情
@@ -102,5 +119,3 @@ demo1/
 - [ ] 支付为模拟实现，接入微信/支付宝需对接真实网关与回调
 - [ ] 无商家后台（商品上下架、订单发货由仓储系统触发）
 - [ ] 可增加图片上传、优惠券、评价体系等能力
-
-

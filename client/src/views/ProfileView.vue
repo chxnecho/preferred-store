@@ -4,17 +4,21 @@
 
     <!-- 基本信息 -->
     <section class="panel user-panel">
-      <div class="avatar">{{ (auth.user?.nickname || auth.user?.username || "?").slice(0, 1) }}</div>
+      <div class="avatar">
+        {{ (auth.user?.nickname || auth.user?.username || "?").slice(0, 1) }}
+      </div>
       <div class="user-info">
         <b>{{ auth.user?.nickname || auth.user?.username }}</b>
         <small>用户名：{{ auth.user?.username }}</small>
       </div>
       <div class="user-stats">
         <router-link to="/orders">
-          <b>{{ orderCount }}</b><span>全部订单</span>
+          <b>{{ orderCount }}</b
+          ><span>全部订单</span>
         </router-link>
         <router-link to="/cart">
-          <b>{{ cart.totalQty }}</b><span>购物车</span>
+          <b>{{ cart.totalQty }}</b
+          ><span>购物车</span>
         </router-link>
       </div>
     </section>
@@ -30,7 +34,9 @@
 
       <div v-for="a in addresses" :key="a.id" class="addr-row" :class="{ default: a.isDefault }">
         <div class="addr-main">
-          <div><b>{{ a.receiver }}</b> {{ a.phone }} <em v-if="a.isDefault">默认</em></div>
+          <div>
+            <b>{{ a.receiver }}</b> {{ a.phone }} <em v-if="a.isDefault">默认</em>
+          </div>
           <div class="sub">{{ a.region }} {{ a.detail }}</div>
         </div>
         <div class="addr-ops">
@@ -60,7 +66,9 @@
             <input v-model.trim="form.detail" placeholder="街道、楼栋、门牌号" />
           </div>
         </div>
-        <label class="default-check"><input type="checkbox" v-model="form.isDefault" /> 设为默认地址</label>
+        <label class="default-check"
+          ><input v-model="form.isDefault" type="checkbox" /> 设为默认地址</label
+        >
         <p v-if="error" class="form-error">{{ error }}</p>
         <div class="form-actions">
           <button type="submit" class="btn-primary small">保存</button>
@@ -78,90 +86,90 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import { api } from "../api";
-import { useAuthStore } from "../stores/auth";
-import { useCartStore } from "../stores/cart";
-import { toast } from "../toast";
+import { onMounted, reactive, ref } from "vue"
+import { useRouter } from "vue-router"
+import { api } from "../api"
+import { useAuthStore } from "../stores/auth"
+import { useCartStore } from "../stores/cart"
+import { toast } from "../toast"
 
-const router = useRouter();
-const auth = useAuthStore();
-const cart = useCartStore();
+const router = useRouter()
+const auth = useAuthStore()
+const cart = useCartStore()
 
-const addresses = ref([]);
-const orderCount = ref(0);
-const showForm = ref(false);
-const editingId = ref(null);
-const error = ref("");
-const form = reactive({ receiver: "", phone: "", region: "", detail: "", isDefault: false });
+const addresses = ref([])
+const orderCount = ref(0)
+const showForm = ref(false)
+const editingId = ref(null)
+const error = ref("")
+const form = reactive({ receiver: "", phone: "", region: "", detail: "", isDefault: false })
 
 function openForm(a = null) {
-  editingId.value = a ? a.id : null;
+  editingId.value = a ? a.id : null
   Object.assign(form, {
     receiver: a?.receiver || "",
     phone: a?.phone || "",
     region: a?.region || "",
     detail: a?.detail || "",
-    isDefault: a ? a.isDefault : false,
-  });
-  error.value = "";
-  showForm.value = true;
+    isDefault: a ? a.isDefault : false
+  })
+  error.value = ""
+  showForm.value = true
 }
 
 async function loadAll() {
   try {
-    const [addrData, orderData] = await Promise.all([api.addresses(), api.orders({ page: 1 })]);
-    addresses.value = addrData.list;
-    orderCount.value = orderData.total;
+    const [addrData, orderData] = await Promise.all([api.addresses(), api.orders({ page: 1 })])
+    addresses.value = addrData.list
+    orderCount.value = orderData.total
   } catch (err) {
-    toast(err.message, "error");
+    toast(err.message, "error")
   }
 }
 
 async function save() {
-  error.value = "";
-  const body = { ...form };
+  error.value = ""
+  const body = { ...form }
   try {
-    if (editingId.value) await api.updateAddress(editingId.value, body);
-    else await api.addAddress(body);
-    showForm.value = false;
-    await loadAll();
-    toast("已保存");
+    if (editingId.value) await api.updateAddress(editingId.value, body)
+    else await api.addAddress(body)
+    showForm.value = false
+    await loadAll()
+    toast("已保存")
   } catch (err) {
-    error.value = err.message;
+    error.value = err.message
   }
 }
 
 async function removeAddr(a) {
-  if (!window.confirm(`确认删除「${a.receiver}」的地址吗？`)) return;
+  if (!window.confirm(`确认删除「${a.receiver}」的地址吗？`)) return
   try {
-    await api.deleteAddress(a.id);
-    await loadAll();
-    toast("已删除");
+    await api.deleteAddress(a.id)
+    await loadAll()
+    toast("已删除")
   } catch (err) {
-    toast(err.message, "error");
+    toast(err.message, "error")
   }
 }
 
 async function setDefault(a) {
   try {
-    await api.updateAddress(a.id, { isDefault: true });
-    await loadAll();
-    toast("已设为默认地址");
+    await api.updateAddress(a.id, { isDefault: true })
+    await loadAll()
+    toast("已设为默认地址")
   } catch (err) {
-    toast(err.message, "error");
+    toast(err.message, "error")
   }
 }
 
 function logout() {
-  auth.logout();
-  cart.fetchCart();
-  toast("已退出登录");
-  router.push("/");
+  auth.logout()
+  cart.fetchCart()
+  toast("已退出登录")
+  router.push("/")
 }
 
-onMounted(loadAll);
+onMounted(loadAll)
 </script>
 
 <style scoped src="../styles/profile.css"></style>

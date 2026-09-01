@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { toasts } from "../toast";
+import { toasts } from "../toast"
 </script>
 
 <style scoped>

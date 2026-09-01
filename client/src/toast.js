@@ -1,7 +1,7 @@
-import { reactive } from "vue";
+import { reactive } from "vue"
 
-export const toasts = reactive([]);
-let seq = 0;
+export const toasts = reactive([])
+let seq = 0
 
 /**
  * 全局提示
@@ -9,10 +9,10 @@ let seq = 0;
  * @param {"success"|"error"} type 类型
  */
 export function toast(message, type = "success") {
-  const item = { id: ++seq, message, type };
-  toasts.push(item);
+  const item = { id: ++seq, message, type }
+  toasts.push(item)
   setTimeout(() => {
-    const i = toasts.indexOf(item);
-    if (i > -1) toasts.splice(i, 1);
-  }, 2400);
+    const i = toasts.indexOf(item)
+    if (i > -1) toasts.splice(i, 1)
+  }, 2400)
 }
