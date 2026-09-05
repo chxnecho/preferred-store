@@ -71,24 +71,24 @@
   width: 90px;
   text-align: right;
 }
-.qty-control {
+.cart-page .qty-control {
   display: flex;
   align-items: center;
   border: 1px solid #ddd;
   border-radius: 999px;
   overflow: hidden;
 }
-.qty-control button {
+.cart-page .qty-control button {
   width: 30px;
   height: 30px;
   background: #fafafa;
   font-size: 15px;
 }
-.qty-control button:disabled {
+.cart-page .qty-control button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.qty {
+.cart-page .qty {
   min-width: 38px;
   text-align: center;
   font-size: 14px;
@@ -142,7 +142,7 @@
   gap: 12px;
   font-size: 14px;
 }
-.price.big {
+.cart-page .price.big {
   font-size: 26px;
 }
 

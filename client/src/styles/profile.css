@@ -132,33 +132,8 @@
   background: var(--primary-light);
 }
 
-.addr-form {
-  margin-top: 14px;
-  border-top: 1px dashed var(--border);
-  padding-top: 16px;
-}
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 16px;
-}
-.default-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  margin-bottom: 12px;
-  cursor: pointer;
-}
-.default-check input {
-  accent-color: var(--primary);
-}
-.form-actions {
-  display: flex;
-  gap: 10px;
-}
-.btn-primary.small,
-.btn-outline.small {
+.profile-page .btn-primary.small,
+.profile-page .btn-outline.small {
   padding: 9px 24px;
   font-size: 14px;
 }

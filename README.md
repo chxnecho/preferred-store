@@ -1,6 +1,6 @@
 # 优选商城 🛍️
 
-一个完整可交付使用的全栈电商系统：**Vue 3 + Vite 前端 + Node.js (Express) + SQLite 后端**。
+一个完整可交付使用的全栈电商系统：**React 19 + Vite 前端 + Node.js (Express) + SQLite 后端**。
 
 ## 功能特性
 
@@ -52,7 +52,7 @@ npm start            # 单进程托管前后端，访问 http://localhost:3000
 
 ```bash
 npm test             # 后端 API 集成测试（node:test + 内存数据库，无外部依赖）
-npm run lint         # ESLint 检查（ESLint 9 + eslint-plugin-vue）
+npm run lint         # ESLint 检查（ESLint 9 + eslint-plugin-react-hooks）
 npm run lint:fix     # 自动修复
 npm run format       # Prettier 统一格式化
 ```
@@ -88,12 +88,12 @@ preferred-store/
 │   │   ├── addresses.js     # 收货地址 CRUD
 │   │   └── orders.js        # 下单（事务）/ 支付 / 取消 / 确认收货
 │   └── data/shop.db         # 数据库文件（运行时生成，已 gitignore）
-└── client/                  # Vue 3 前端
+└── client/                  # React 19 前端
     ├── vite.config.js       # 含 /api 开发代理
     └── src/
         ├── api.js           # 统一请求封装（token 注入、401 处理）
         ├── router/index.js  # 路由与登录守卫
-        ├── stores/          # Pinia：auth / cart
+        ├── stores/          # Zustand：auth / cart
         ├── components/      # NavBar / ProductCard / ToastHost
         ├── styles/          # 页面级样式
         └── views/           # 首页/列表/详情/登录注册/购物车/结算/订单/个人中心
@@ -101,7 +101,7 @@ preferred-store/
 
 ## 技术栈
 
-- **前端**：Vue 3（Composition API）+ Vite + Vue Router 4 + Pinia
+- **前端**：React 19 + Vite + React Router 7 + Zustand
 - **后端**：Express 4 + node:sqlite + JWT + bcryptjs
 - **数据库**：SQLite（单文件，零外部依赖）
 

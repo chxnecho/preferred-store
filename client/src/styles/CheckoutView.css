@@ -1,0 +1,135 @@
+.checkout-page {
+  padding-bottom: 40px;
+}
+.checkout-page .panel {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.checkout-page .panel h3 {
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+.checkout-page .panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.checkout-page .panel-head h3 {
+  margin-bottom: 0;
+}
+.checkout-page .add-addr-btn {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+.checkout-page .add-addr-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.checkout-page .addr-empty {
+  font-size: 13px;
+  color: var(--text-light);
+}
+.checkout-page .addr-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.checkout-page .addr-card {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  font-size: 14px;
+}
+.checkout-page .addr-card.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.checkout-page .addr-card input {
+  accent-color: var(--primary);
+  margin-top: 3px;
+}
+.checkout-page .addr-body b {
+  margin-right: 8px;
+}
+.checkout-page .addr-body em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--primary);
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 5px;
+  margin-left: 6px;
+}
+.checkout-page .addr-detail {
+  color: var(--text-light);
+  font-size: 13px;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+.checkout-page .item-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 14px;
+}
+.checkout-page .item-row:last-of-type {
+  border-bottom: none;
+}
+.checkout-page .item-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.checkout-page .item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.checkout-page .item-qty {
+  color: var(--text-light);
+}
+.checkout-page .item-sub {
+  width: 100px;
+  text-align: right;
+}
+
+.checkout-bar {
+  position: sticky;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 22px;
+  font-size: 14px;
+}
+.checkout-page .price.big {
+  font-size: 26px;
+}
+.checkout-page .submit-btn {
+  min-width: 160px;
+}

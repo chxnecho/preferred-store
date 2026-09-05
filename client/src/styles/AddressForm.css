@@ -1,0 +1,34 @@
+.addr-form {
+  margin-top: 16px;
+  border-top: 1px dashed var(--border);
+  padding-top: 18px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.default-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.default-check input {
+  accent-color: var(--primary);
+}
+.addr-form-actions {
+  display: flex;
+  gap: 10px;
+}
+.addr-form .btn-primary.small {
+  padding: 9px 26px;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

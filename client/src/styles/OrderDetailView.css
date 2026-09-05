@@ -1,0 +1,102 @@
+.order-detail-page {
+  padding: 28px 0 40px;
+}
+.order-detail-page .status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 26px 28px;
+  margin-bottom: 16px;
+  border-left: 6px solid var(--primary);
+}
+.order-detail-page .status-card.paid {
+  border-left-color: #409eff;
+}
+.order-detail-page .status-card.completed {
+  border-left-color: #34c98e;
+}
+.order-detail-page .status-card.cancelled {
+  border-left-color: #999;
+}
+.order-detail-page .status-card h2 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.order-detail-page .status-card p {
+  font-size: 13px;
+  color: var(--text-light);
+}
+.order-detail-page .status-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.order-detail-page .panel {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.order-detail-page .panel h3 {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: var(--text-light);
+}
+.order-detail-page .addr-line {
+  font-size: 15px;
+}
+.order-detail-page .addr-line.sub {
+  color: var(--text-light);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.order-detail-page .item-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+  cursor: pointer;
+  font-size: 14px;
+}
+.order-detail-page .item-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.order-detail-page .item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.order-detail-page .item-qty {
+  color: var(--text-light);
+}
+.order-detail-page .item-sub {
+  width: 100px;
+  text-align: right;
+}
+
+.order-detail-page .total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.order-detail-page .price.big {
+  font-size: 24px;
+}

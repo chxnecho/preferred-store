@@ -1,49 +1,41 @@
-import { defineStore } from "pinia"
-import { ref } from "vue"
+import { create } from "zustand"
 import { api } from "../api"
 import { getToken, getStoredUser, setToken, setStoredUser } from "../auth"
 
-export const useAuthStore = defineStore("auth", () => {
-  const token = ref(getToken())
-  const user = ref(getStoredUser())
+export const useAuthStore = create((set, get) => ({
+  token: getToken(),
+  user: getStoredUser(),
 
-  function isLoggedIn() {
-    return !!token.value
-  }
+  isLoggedIn: () => Boolean(get().token),
 
-  function setAuth(t, u) {
-    token.value = t
-    user.value = u
-    setToken(t)
-    setStoredUser(u)
-  }
+  setAuth: (token, user) => {
+    setToken(token)
+    setStoredUser(user)
+    set({ token, user })
+  },
 
-  async function login(username, password) {
+  login: async (username, password) => {
     const data = await api.login({ username, password })
-    setAuth(data.token, data.user)
+    get().setAuth(data.token, data.user)
     return data.user
-  }
+  },
 
-  async function register(payload) {
+  register: async (payload) => {
     const data = await api.register(payload)
-    setAuth(data.token, data.user)
+    get().setAuth(data.token, data.user)
     return data.user
-  }
+  },
 
-  async function fetchMe() {
-    if (!token.value) return
+  fetchMe: async () => {
+    if (!get().token) return
     try {
       const data = await api.me()
-      user.value = data.user
+      set({ user: data.user })
       setStoredUser(data.user)
     } catch {
       /* token 失效已在 api 层清除 */
     }
-  }
+  },
 
-  function logout() {
-    setAuth("", null)
-  }
-
-  return { token, user, isLoggedIn, setAuth, login, register, fetchMe, logout }
-})
+  logout: () => get().setAuth("", null)
+}))

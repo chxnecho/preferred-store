@@ -1,55 +1,39 @@
-import { defineStore } from "pinia"
-import { ref } from "vue"
+import { create } from "zustand"
 import { api } from "../api"
 import { useAuthStore } from "./auth"
 
-export const useCartStore = defineStore("cart", () => {
-  const items = ref([])
-  const totalQty = ref(0)
-  const totalPrice = ref(0)
-  const loaded = ref(false)
+function apply(data) {
+  return { items: data.items, totalQty: data.totalQty, totalPrice: data.totalPrice }
+}
 
-  async function fetchCart() {
-    const auth = useAuthStore()
-    if (!auth.isLoggedIn()) {
-      items.value = []
-      totalQty.value = 0
-      totalPrice.value = 0
-      loaded.value = true
+export const useCartStore = create((set) => ({
+  items: [],
+  totalQty: 0,
+  totalPrice: 0,
+  loaded: false,
+
+  fetchCart: async () => {
+    if (!useAuthStore.getState().isLoggedIn()) {
+      set({ items: [], totalQty: 0, totalPrice: 0, loaded: true })
       return
     }
     const data = await api.cart()
-    items.value = data.items
-    totalQty.value = data.totalQty
-    totalPrice.value = data.totalPrice
-    loaded.value = true
-  }
+    set({ ...apply(data), loaded: true })
+  },
 
-  async function add(productId, qty = 1) {
-    const data = await api.addToCart(productId, qty)
-    apply(data)
-  }
+  add: async (productId, qty = 1) => {
+    set(apply(await api.addToCart(productId, qty)))
+  },
 
-  async function updateQty(productId, qty) {
-    const data = await api.updateCartItem(productId, qty)
-    apply(data)
-  }
+  updateQty: async (productId, qty) => {
+    set(apply(await api.updateCartItem(productId, qty)))
+  },
 
-  async function remove(productId) {
-    const data = await api.removeCartItem(productId)
-    apply(data)
-  }
+  remove: async (productId) => {
+    set(apply(await api.removeCartItem(productId)))
+  },
 
-  async function clear() {
-    const data = await api.clearCart()
-    apply(data)
+  clear: async () => {
+    set(apply(await api.clearCart()))
   }
-
-  function apply(data) {
-    items.value = data.items
-    totalQty.value = data.totalQty
-    totalPrice.value = data.totalPrice
-  }
-
-  return { items, totalQty, totalPrice, loaded, fetchCart, add, updateQty, remove, clear }
-})
+}))

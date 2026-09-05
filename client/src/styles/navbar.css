@@ -1,0 +1,6 @@
+/* 移动端导航收纳：仅保留登录/注册（.keep）与购物车按钮 */
+@media (max-width: 600px) {
+  .nav a:not(.keep) {
+    display: none;
+  }
+}

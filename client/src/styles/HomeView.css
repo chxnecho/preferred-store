@@ -1,0 +1,151 @@
+.banner {
+  position: relative;
+  height: 380px;
+  overflow: hidden;
+}
+.banner-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.banner-slide.active {
+  opacity: 1;
+}
+.slide-1 {
+  background: linear-gradient(120deg, #ff7a59, #ffb347);
+}
+.slide-2 {
+  background: linear-gradient(120deg, #4f8cff, #38d0ff);
+}
+.slide-3 {
+  background: linear-gradient(120deg, #34c98e, #a8e063);
+}
+.banner-content {
+  text-align: center;
+  color: #fff;
+  animation: fadeUp 0.8s ease;
+}
+@keyframes fadeUp {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.banner-content h1 {
+  font-size: 40px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.banner-content p {
+  font-size: 17px;
+  margin-bottom: 24px;
+  opacity: 0.95;
+}
+.banner-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-size: 22px;
+  z-index: 5;
+}
+.banner-arrow:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+.prev {
+  left: 24px;
+}
+.next {
+  right: 24px;
+}
+.banner-dots {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  z-index: 5;
+}
+.banner-dots .dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.banner-dots .dot.active {
+  background: #fff;
+  width: 26px;
+  border-radius: 999px;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+.feature-item {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+}
+.feature-item b {
+  display: block;
+  font-size: 15px;
+}
+.feature-item small {
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+.hot-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.more-link {
+  color: var(--text-light);
+  font-size: 14px;
+}
+.more-link:hover {
+  color: var(--primary);
+}
+
+@media (max-width: 900px) {
+  .features {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .banner {
+    height: 280px;
+  }
+  .banner-content h1 {
+    font-size: 28px;
+  }
+}
+@media (max-width: 600px) {
+  .features {
+    grid-template-columns: 1fr;
+  }
+}

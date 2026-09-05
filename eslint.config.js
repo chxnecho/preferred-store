@@ -1,5 +1,6 @@
 import js from "@eslint/js"
-import pluginVue from "eslint-plugin-vue"
+import reactHooks from "eslint-plugin-react-hooks"
+import reactRefresh from "eslint-plugin-react-refresh"
 import globals from "globals"
 
 export default [
@@ -7,22 +8,28 @@ export default [
     ignores: ["**/node_modules/**", "**/dist/**", "legacy/**", "server/data/**"]
   },
   js.configs.recommended,
-  ...pluginVue.configs["flat/recommended"],
   {
+    files: ["**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: { ...globals.browser, ...globals.node }
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: {
+        ecmaFeatures: { jsx: true }
+      }
+    },
+    plugins: {
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh
     },
     rules: {
       "no-console": "off", // 服务端脚本允许 console
       "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-      // 单文件组件 App.vue 允许单词命名
-      "vue/multi-word-component-names": "off",
-      // 关闭与现有紧凑模板风格冲突的纯格式规则（保留结构类校验）
-      "vue/max-attributes-per-line": "off",
-      "vue/singleline-html-element-content-newline": "off",
-      "vue/html-self-closing": "off"
+      ...reactHooks.configs.recommended.rules,
+      // 数据在 effect 中加载（无 react-query 数据层的刻意选择），关闭该过于严格的新规则
+      "react-hooks/set-state-in-effect": "off",
+      // zustand store 文件同时导出 store 与组件外使用的 action 函数
+      "react-refresh/only-export-components": "off"
     }
   }
 ]

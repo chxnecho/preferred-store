@@ -1,7 +1,17 @@
-import { reactive } from "vue"
+import { create } from "zustand"
 
-export const toasts = reactive([])
 let seq = 0
+
+export const useToastStore = create((set) => ({
+  toasts: [],
+  push: (message, type = "success") => {
+    const item = { id: ++seq, message, type }
+    set((s) => ({ toasts: [...s.toasts, item] }))
+    setTimeout(() => {
+      set((s) => ({ toasts: s.toasts.filter((t) => t.id !== item.id) }))
+    }, 2400)
+  }
+}))
 
 /**
  * 全局提示
@@ -9,10 +19,5 @@ let seq = 0
  * @param {"success"|"error"} type 类型
  */
 export function toast(message, type = "success") {
-  const item = { id: ++seq, message, type }
-  toasts.push(item)
-  setTimeout(() => {
-    const i = toasts.indexOf(item)
-    if (i > -1) toasts.splice(i, 1)
-  }, 2400)
+  useToastStore.getState().push(message, type)
 }
