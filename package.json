@@ -2,15 +2,16 @@
   "name": "preferred-store",
   "version": "1.0.0",
   "private": true,
-  "description": "优选商城 - Vue3 + Express 全栈电商系统",
+  "description": "优选商城 - React19 + Express 全栈电商系统",
   "type": "module",
   "scripts": {
     "install:all": "npm install && npm --prefix client install",
-    "seed": "node server/seed.js",
-    "dev": "concurrently -n server,client -c blue,green \"node server/index.js\" \"npm --prefix client run dev\"",
+    "seed": "tsx server/seed.ts",
+    "dev": "concurrently -n server,client -c blue,green \"tsx watch server/index.ts\" \"npm --prefix client run dev\"",
     "build": "npm --prefix client run build",
-    "start": "cross-env NODE_ENV=production node server/index.js",
-    "test": "node --test server/test/*.test.js",
+    "start": "cross-env NODE_ENV=production tsx server/index.ts",
+    "test": "node --import tsx --test server/test/*.test.ts",
+    "typecheck": "tsc --noEmit -p server && tsc --noEmit -p client",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
@@ -33,10 +34,19 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^22.20.1",
     "eslint": "^10.9.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",
     "globals": "^17.11.0",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
   }
 }
