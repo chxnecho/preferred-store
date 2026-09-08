@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, type ReactNode } from "react"
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import NavBar from "./components/NavBar"
 import ConfirmDialog from "./components/ConfirmDialog"
+import ErrorBoundary from "./components/ErrorBoundary"
 import ToastHost from "./components/ToastHost"
 import { AUTH_EXPIRED_EVENT } from "./api"
 import { useAuthStore } from "./stores/auth"
@@ -78,7 +79,8 @@ export default function App() {
     <>
       <ScrollToTop />
       <NavBar />
-      <Routes>
+      <ErrorBoundary>
+        <Routes>
         <Route path="/" element={<HomeView />} />
         <Route
           path="/products"
@@ -163,7 +165,8 @@ export default function App() {
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
       <footer className="footer">
         <div className="container">
           <p>© 2026 优选商城 · 精选好物，品质生活</p>

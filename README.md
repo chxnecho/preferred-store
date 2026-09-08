@@ -26,7 +26,7 @@
 | 地址   | `GET/POST /api/addresses` · `PUT/DELETE /api/addresses/:id`                                                                   |
 | 订单   | `POST /api/orders`（事务扣库存）· `GET /api/orders` · `GET /api/orders/:id` · `POST /api/orders/:id/pay` `/cancel` `/confirm` |
 
-> 完整请求示例见各路由文件 `server/routes/*.js`。
+> 完整请求示例见各路由文件 `server/routes/*.ts`。
 
 ## 快速开始
 

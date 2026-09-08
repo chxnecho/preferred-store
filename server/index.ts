@@ -61,6 +61,10 @@ if (process.env.NODE_ENV === "production") {
 
 app.use(express.json({ limit: "100kb" }))
 
+// ===== 响应压缩 =====
+// 必须注册在路由之前，否则 /api/* 的 JSON 响应不会被压缩
+app.use(compression())
+
 // ===== HTTP 访问日志（测试环境静默） =====
 if (!isTest) {
   app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"))
@@ -79,9 +83,6 @@ app.get("/api/health", (_req: Request, res: Response) =>
 
 // 统一 404（API）
 app.use("/api", (_req: Request, res: Response) => res.status(404).json({ message: "接口不存在" }))
-
-// ===== 响应压缩 =====
-app.use(compression())
 
 // ===== 生产模式：托管前端构建产物 =====
 if (process.env.NODE_ENV === "production") {
