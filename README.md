@@ -64,7 +64,7 @@ npm run format       # Prettier 统一格式化
 其他命令：
 
 ```bash
-node server/seed.js --force   # 清空并重灌商品数据
+npm run seed -- --force       # 清空并重灌商品数据
 ```
 
 ## 项目结构
@@ -73,26 +73,26 @@ node server/seed.js --force   # 清空并重灌商品数据
 preferred-store/
 ├── package.json             # 根配置与统一启动脚本
 ├── server/                  # Express 后端
-│   ├── index.js             # 入口：路由挂载、静态托管、错误处理
-│   ├── db.js                # SQLite 连接、事务工具、旧库迁移
-│   ├── errors.js            # BizError 业务错误类
+│   ├── index.ts             # 入口：路由挂载、静态托管、错误处理
+│   ├── db.ts                # SQLite 连接、事务工具、旧库迁移
+│   ├── errors.ts            # BizError 业务错误类
 │   ├── schema.sql           # 建表语句
-│   ├── seed.js              # 种子数据（商品 + 演示账号）
-│   ├── middleware/auth.js   # JWT 签发与鉴权中间件
-│   ├── jobs/order-expiry.js # 待支付订单超时自动取消
-│   ├── test/api.test.js     # API 集成测试（node:test）
+│   ├── seed.ts              # 种子数据（商品 + 演示账号）
+│   ├── middleware/auth.ts   # JWT 签发与鉴权中间件
+│   ├── jobs/order-expiry.ts # 待支付订单超时自动取消
+│   ├── test/api.test.ts     # API 集成测试（node:test）
 │   ├── routes/
-│   │   ├── auth.js          # 注册 / 登录 / 我的信息
-│   │   ├── products.js      # 商品列表 / 分类 / 详情
-│   │   ├── cart.js          # 购物车 CRUD
-│   │   ├── addresses.js     # 收货地址 CRUD
-│   │   └── orders.js        # 下单（事务）/ 支付 / 取消 / 确认收货
+│   │   ├── auth.ts          # 注册 / 登录 / 我的信息
+│   │   ├── products.ts      # 商品列表 / 分类 / 详情
+│   │   ├── cart.ts          # 购物车 CRUD
+│   │   ├── addresses.ts     # 收货地址 CRUD
+│   │   └── orders.ts        # 下单（事务）/ 支付 / 取消 / 确认收货
 │   └── data/shop.db         # 数据库文件（运行时生成，已 gitignore）
 └── client/                  # React 19 前端
-    ├── vite.config.js       # 含 /api 开发代理
+    ├── vite.config.ts       # 含 /api 开发代理
     └── src/
-        ├── api.js           # 统一请求封装（token 注入、401 处理）
-        ├── router/index.js  # 路由与登录守卫
+        ├── api.ts           # 统一请求封装（token 注入、401 处理）
+        ├── App.tsx          # 路由与登录守卫
         ├── stores/          # Zustand：auth / cart
         ├── components/      # NavBar / ProductCard / ToastHost
         ├── styles/          # 页面级样式

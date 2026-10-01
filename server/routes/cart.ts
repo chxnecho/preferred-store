@@ -11,12 +11,12 @@ function getCartItems(userId: number): CartItem[] {
   return dbAll<CartItem>(
     db.prepare(
       `SELECT c.product_id AS productId,
-              CASE WHEN p.stock <= 0 THEN 0 ELSE MIN(c.qty, p.stock) END AS qty,
+              CASE WHEN p.stock <= 0 OR p.is_active = 0 THEN 0 ELSE MIN(c.qty, p.stock) END AS qty,
               p.name, p.description,
               p.price_cents / 100.0 AS price,
               p.emoji, p.bg, p.stock,
               CASE WHEN p.stock <= 0 OR p.is_active = 0 THEN 1 ELSE 0 END AS soldOut,
-              CASE WHEN p.stock > 0 AND c.qty > p.stock THEN 1 ELSE 0 END AS stockShortage
+              CASE WHEN p.is_active = 1 AND p.stock > 0 AND c.qty > p.stock THEN 1 ELSE 0 END AS stockShortage
        FROM cart_items c JOIN products p ON p.id = c.product_id
        WHERE c.user_id = ? ORDER BY c.rowid DESC`
     ),
@@ -41,7 +41,7 @@ router.post("/", (req, res) => {
   const productId = Number(req.body?.productId)
   const qty = Math.max(1, parseInt(req.body?.qty) || 1)
   const product = dbGet<{ id: number; stock: number }>(
-    db.prepare("SELECT id, stock FROM products WHERE id = ?"),
+    db.prepare("SELECT id, stock FROM products WHERE id = ? AND is_active = 1"),
     productId
   )
   if (!product) return res.status(404).json({ message: "商品不存在或已下架" })

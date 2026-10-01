@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express"
 import { db, dbAll, dbGet, withTransaction, type AddressRow } from "../db"
+import { BizError } from "../errors"
 import { authRequired } from "../middleware/auth"
 import type { Address, AddressInput } from "../../shared/types"
 
@@ -57,9 +58,9 @@ router.post("/", (req, res) => {
       )
     return Number(info.lastInsertRowid)
   })
-  res
-    .status(201)
-    .json({ address: shape(dbGet<AddressRow>(db.prepare("SELECT * FROM addresses WHERE id = ?"), id)!) })
+  res.status(201).json({
+    address: shape(dbGet<AddressRow>(db.prepare("SELECT * FROM addresses WHERE id = ?"), id)!)
+  })
 })
 
 router.put("/:id", (req, res) => {
@@ -103,21 +104,38 @@ router.put("/:id", (req, res) => {
       db.prepare("UPDATE addresses SET is_default = 1 WHERE id = ?").run(addr.id)
     }
   })
-  res.json({ address: shape(dbGet<AddressRow>(db.prepare("SELECT * FROM addresses WHERE id = ?"), addr.id)!) })
+  res.json({
+    address: shape(dbGet<AddressRow>(db.prepare("SELECT * FROM addresses WHERE id = ?"), addr.id)!)
+  })
 })
 
 router.delete("/:id", (req, res) => {
-  const info = db
-    .prepare("DELETE FROM addresses WHERE id = ? AND user_id = ?")
-    .run(Number(req.params.id), req.user.id)
-  if (info.changes === 0) return res.status(404).json({ message: "地址不存在" })
-  // 若删除的是默认地址，提升第一条为默认
-  const first = dbGet<{ id: number }>(
-    db.prepare("SELECT id FROM addresses WHERE user_id = ? LIMIT 1"),
-    req.user.id
-  )
-  if (first) db.prepare("UPDATE addresses SET is_default = 1 WHERE id = ?").run(first.id)
-  res.json({ ok: true })
+  try {
+    withTransaction(() => {
+      const info = db
+        .prepare("DELETE FROM addresses WHERE id = ? AND user_id = ?")
+        .run(Number(req.params.id), req.user.id)
+      if (info.changes === 0) throw new BizError("地址不存在", 404)
+
+      // 只有删除后没有默认地址时才提升第一条，避免删除普通地址产生多个默认地址。
+      const hasDefault = dbGet<{ "1": number }>(
+        db.prepare("SELECT 1 FROM addresses WHERE user_id = ? AND is_default = 1 LIMIT 1"),
+        req.user.id
+      )
+      if (!hasDefault) {
+        const first = dbGet<{ id: number }>(
+          db.prepare("SELECT id FROM addresses WHERE user_id = ? ORDER BY id ASC LIMIT 1"),
+          req.user.id
+        )
+        if (first) db.prepare("UPDATE addresses SET is_default = 1 WHERE id = ?").run(first.id)
+      }
+    })
+    res.json({ ok: true })
+  } catch (err) {
+    if (err instanceof BizError)
+      return res.status(err.statusCode || 400).json({ message: err.message })
+    throw err
+  }
 })
 
 export default router

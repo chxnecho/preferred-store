@@ -31,7 +31,9 @@ before(() => {
   const insUser = db.prepare(
     "INSERT INTO users (username, password_hash, nickname) VALUES (?, ?, ?)"
   )
-  userAlice = Number(insUser.run("alice", bcrypt.hashSync("pass123456", 10), "Alice").lastInsertRowid)
+  userAlice = Number(
+    insUser.run("alice", bcrypt.hashSync("pass123456", 10), "Alice").lastInsertRowid
+  )
 
   const insProduct = db.prepare(
     `INSERT INTO products (name, description, price_cents, sales, category, emoji, bg, stock)
@@ -46,7 +48,8 @@ before(() => {
       .prepare(
         "INSERT INTO addresses (user_id, receiver, phone, region, detail, is_default) VALUES (?, ?, ?, ?, ?, 1)"
       )
-      .run(userAlice, "张三", "13800000000", "上海市 上海市 浦东新区", "测试路 1 号").lastInsertRowid
+      .run(userAlice, "张三", "13800000000", "上海市 上海市 浦东新区", "测试路 1 号")
+      .lastInsertRowid
   )
 })
 
@@ -59,7 +62,10 @@ interface ReqOptions {
 }
 
 // 测试文件以行为验证为主，data 默认 any 便于直接断言响应字段
-async function req<T = any>(pathname: string, { method = "GET", token: t, body }: ReqOptions = {}): Promise<{ status: number; data: T }> {
+async function req<T = any>(
+  pathname: string,
+  { method = "GET", token: t, body }: ReqOptions = {}
+): Promise<{ status: number; data: T }> {
   const res = await fetch(`${base}${pathname}`, {
     method,
     headers: {
@@ -83,9 +89,10 @@ async function login(
 }
 
 function stockOf(productId: number): { stock: number; sales: number } {
-  return db
-    .prepare("SELECT stock, sales FROM products WHERE id = ?")
-    .get(productId) as unknown as { stock: number; sales: number }
+  return db.prepare("SELECT stock, sales FROM products WHERE id = ?").get(productId) as unknown as {
+    stock: number
+    sales: number
+  }
 }
 
 before(async () => {
@@ -182,6 +189,17 @@ describe("cart", () => {
       userAlice,
       pSoldOut
     )
+  })
+
+  it("已下架商品不可加入购物车", async () => {
+    db.prepare("UPDATE products SET is_active = 0, stock = 5 WHERE id = ?").run(pSoldOut)
+    const add = await req("/api/cart", {
+      method: "POST",
+      token,
+      body: { productId: pSoldOut, qty: 1 }
+    })
+    assert.equal(add.status, 404)
+    db.prepare("UPDATE products SET is_active = 1, stock = 0 WHERE id = ?").run(pSoldOut)
   })
 
   it("修改数量超过库存时被截断，qty<=0 删除条目", async () => {
@@ -350,5 +368,37 @@ describe("addresses", () => {
     assert.equal(del.status, 200)
     const after = await req("/api/addresses", { token })
     assert.ok(after.data.list.some((a: any) => a.isDefault))
+  })
+
+  it("删除非默认地址不会产生多个默认地址", async () => {
+    const def = await req("/api/addresses", {
+      method: "POST",
+      token,
+      body: {
+        receiver: "王五",
+        phone: "13700000000",
+        region: "上海市 上海市 徐汇区",
+        detail: "测试路 3 号",
+        isDefault: true
+      }
+    })
+    const ordinary = await req("/api/addresses", {
+      method: "POST",
+      token,
+      body: {
+        receiver: "赵六",
+        phone: "13600000000",
+        region: "上海市 上海市 静安区",
+        detail: "测试路 4 号",
+        isDefault: false
+      }
+    })
+    assert.equal(
+      (await req(`/api/addresses/${ordinary.data.address.id}`, { method: "DELETE", token })).status,
+      200
+    )
+    const after = await req("/api/addresses", { token })
+    assert.equal(after.data.list.filter((a: any) => a.isDefault).length, 1)
+    assert.equal(after.data.list.find((a: any) => a.isDefault)?.id, def.data.address.id)
   })
 })

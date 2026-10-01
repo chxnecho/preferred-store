@@ -17,6 +17,7 @@ npm-debug.log*
 node_modules/
 dist/
 build/
+*.tsbuildinfo
 
 # 环境变量
 .env
